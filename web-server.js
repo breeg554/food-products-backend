@@ -3,8 +3,10 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import bodyParser from "body-parser";
+import csrf from "csurf";
+import cookieParser from "cookie-parser";
 import router from "./routes/index.js";
-import { port } from "../config/web-server.js";
+import { port } from "./config/web-server.js";
 
 let httpServer;
 
@@ -15,7 +17,15 @@ export const initialize = () => {
 
     app.use(morgan("combined"));
     app.use(express.json());
-    app.use(cors());
+    app.use(cookieParser());
+    app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+    // const csrfProtection = csrf({
+    //   cookie: true,
+    // });
+    // app.use(csrfProtection);
+    // app.get("/api/csrf-token", (req, res) => {
+    //   res.json({ csrfToken: req.csrfToken() });
+    // });
     app.use("/api", router);
     app.use((req, res, next) => {
       const error = new Error("Not found!");

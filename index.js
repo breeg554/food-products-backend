@@ -1,6 +1,6 @@
 import express from "express";
-import { initialize, close } from "./services/web-server.js";
-import { initializeDB, closeDB } from "./services/database.js";
+import { initialize, close } from "./web-server.js";
+import { initializeDB, closeDB } from "./database.js";
 
 const startup = async () => {
   console.log("Starting application");

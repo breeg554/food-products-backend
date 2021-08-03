@@ -1,19 +1,19 @@
-import Category from "../models/category.js";
+import Tags from "../models/tags.js";
 import ApiError from "../utils/ApiError.js";
 
 export const create = (req, res, next) => {
-  const newCategory = new Category(req.body);
+  const newTag = new Tags(req.body);
 
-  newCategory.save((err, cat) => {
+  newTag.save((err, cat) => {
     if (err) return next(new ApiError(err.message, 400));
     res.status(201).json(cat);
   });
 };
 export const get = (req, res, next) => {
-  Category.find({})
+  Tags.find({})
     .select("_id name")
-    .exec((err, categories) => {
+    .exec((err, tags) => {
       if (err) return next(new ApiError(err.message, 400));
-      res.status(200).json(categories);
+      res.status(200).json(tags);
     });
 };

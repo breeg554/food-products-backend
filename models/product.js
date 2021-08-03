@@ -1,71 +1,131 @@
 import mongoose from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
 const { Schema } = mongoose;
 
-const productSchema = new Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      unique: true,
-      minLength: 3,
-      maxLength: 200,
+const productSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    minLength: 3,
+    maxLength: 200,
+  },
+
+  nutrition: {
+    totalWeight: {
+      amount: {
+        type: Number,
+        required: true,
+        min: 0,
+        max: 1000000,
+      },
+      unit: {
+        type: String,
+        default: "g",
+      },
     },
     nutrients: {
       calories: {
-        type: Number,
-        required: true,
-        max: 10000,
+        amount: {
+          type: Number,
+          required: true,
+          min: 0,
+          max: 10000,
+        },
+        unit: { type: String, default: "cal" },
+        percentOfDailyNeeds: {
+          type: Number,
+          required: true,
+          min: 0,
+          max: 1000,
+        },
       },
       protein: {
-        type: Number,
-        required: true,
-        max: 500,
+        amount: {
+          type: Number,
+          required: true,
+          min: 0,
+          max: 1000,
+        },
+        unit: { type: String, default: "g" },
+        percentOfDailyNeeds: {
+          type: Number,
+          required: true,
+          min: 0,
+          max: 1000,
+        },
       },
       fat: {
-        type: Number,
-        required: true,
-        max: 500,
+        amount: {
+          type: Number,
+          required: true,
+          min: 0,
+          max: 1000,
+        },
+        unit: { type: String, default: "g" },
+        percentOfDailyNeeds: {
+          type: Number,
+          min: 0,
+          max: 1000,
+        },
       },
-      carbohydrates: {
-        type: Number,
-        required: true,
-        max: 500,
+      carb: {
+        amount: {
+          type: Number,
+          required: true,
+          min: 0,
+          max: 1000,
+        },
+        unit: { type: String, default: "g" },
+        percentOfDailyNeeds: {
+          type: Number,
+          min: 0,
+          max: 1000,
+        },
       },
     },
-    gramsPerUnit: {
-      type: Number,
-      required: true,
-    },
-    _categoryId: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      ref: "Category",
-    },
-    _authorId: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      ref: "User",
-    },
-    isConfirmed: {
-      type: Boolean,
-      default: false,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now(),
+    caloricBreakdown: {
+      percentProtein: {
+        type: Number,
+
+        min: 0,
+        max: 100,
+      },
+      percentFat: {
+        type: Number,
+        min: 0,
+        max: 100,
+      },
+      percentCarbs: {
+        type: Number,
+
+        min: 0,
+        max: 100,
+      },
     },
   },
-  {
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  }
-);
 
-productSchema.virtual("category", {
-  ref: "Category",
-  localField: "categoryId",
-  foreignField: "_id",
-  justOne: true,
+  tags: {
+    type: [String],
+  },
+  category: {
+    type: String,
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ["accepted", "rejected", "in_progress"],
+    default: "in_progress",
+  },
+  _authorId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now(),
+  },
 });
-
+productSchema.plugin(mongoosePaginate);
 export default mongoose.model("Product", productSchema);

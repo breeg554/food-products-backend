@@ -1,10 +1,11 @@
 import express from "express";
 import category from "./category.js";
+import tags from "./tags.js";
 import product from "./product.js";
 import user from "./user.js";
 const router = express.Router();
-
-router.use("/category", category);
-router.use("/product", product);
+router.use("/tags", tags);
+router.use("/categories", category);
+router.use("/products", product);
 router.use("/", user);
 export default router;
