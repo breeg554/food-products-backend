@@ -20,6 +20,39 @@ export const initialize = () => {
     app.use(morgan("combined"));
     app.use(express.json());
     app.use(cookieParser());
+    app.use(cors({ credentials: true, origin: origin }));
+    // const csrfProtection = csrf({
+    //   cookie: true,
+    // });
+    // app.use(csrfProtection);
+    // app.get("/api/csrf-token", (req, res) => {
+    //   res.json({ csrfToken: req.csrfToken() });
+    // });
+    app.use("/api", router);
+    app.use((req, res, next) => {
+      const error = new Error("Not found!");
+      error.status = 404;
+      next(error);
+    });
+    app.use((error, req, res, next) => {
+      res.status(error.status || 500).json({
+        error: {
+          status: error.status || 500,
+          message: error.message,
+        },
+      });
+    });
+
+    httpServer
+      .listen(port)
+      .on("listening", () => {
+        console.log(`web-server listening on port:${port}`);
+        resolve();
+      })
+      .on("error", (err) => {
+        console.log(err);
+        reject();
+      });
   });
 };
 export const close = () => {
