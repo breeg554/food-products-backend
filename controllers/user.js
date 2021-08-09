@@ -118,8 +118,8 @@ export const signInAnonymous = async (req, res, next) => {
     const NewRefToken = new Token({ token: refreshToken, _userId: newAnonymousUser._id });
     NewRefToken.save();
 
-    res.cookie("refreshToken", refreshToken, { httpOnly: true });
-    res.cookie("accessToken", accessToken, { httpOnly: true });
+    res.cookie("refreshToken", refreshToken, { httpOnly: true, sameSite: "none" });
+    res.cookie("accessToken", accessToken, { httpOnly: true, sameSite: "none" });
 
     const resData = {
       user: getUserDataForResponse(newAnonymousUser),
@@ -159,8 +159,8 @@ export const signIn = async (req, res, next) => {
     const resData = {
       user: getUserDataForResponse(user),
     };
-    res.cookie("refreshToken", refreshToken, { httpOnly: true });
-    res.cookie("accessToken", accessToken, { httpOnly: true });
+    res.cookie("refreshToken", refreshToken, { httpOnly: true, sameSite: "none" });
+    res.cookie("accessToken", accessToken, { httpOnly: true, sameSite: "none" });
     res.status(200).json(resData);
   } catch (err) {
     next(err);
