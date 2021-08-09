@@ -14,4 +14,4 @@ const tagSchema = new Schema({
     default: Date.now(),
   },
 });
-export default mongoose.model("tag", tagSchema);
+export default mongoose.model("Tag", tagSchema);

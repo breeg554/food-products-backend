@@ -1,29 +1,25 @@
 import mongoose from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
+import ApiError from "../utils/ApiError.js";
+import UserStats from "./userStats.js";
+import User from "./user.js";
 const { Schema } = mongoose;
 
 const productSchema = new Schema({
   name: {
     type: String,
     required: true,
-    unique: true,
+
     minLength: 3,
     maxLength: 200,
   },
 
+  unitOfMeasure: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: "UnitOfMeasure",
+  },
   nutrition: {
-    totalWeight: {
-      amount: {
-        type: Number,
-        required: true,
-        min: 0,
-        max: 1000000,
-      },
-      unit: {
-        type: String,
-        default: "g",
-      },
-    },
     nutrients: {
       calories: {
         amount: {
@@ -106,11 +102,12 @@ const productSchema = new Schema({
   },
 
   tags: {
-    type: [String],
+    type: [{ type: Schema.Types.ObjectId, ref: "Tag" }],
   },
   category: {
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true,
+    ref: "ProductCategories",
   },
   status: {
     type: String,
@@ -126,6 +123,22 @@ const productSchema = new Schema({
     type: Date,
     default: Date.now(),
   },
+});
+productSchema.post("save", async (doc, next) => {
+  try {
+    const user = await User.findById({ _id: doc._authorId });
+    if (!user.userStats) return next();
+
+    const userStats = await UserStats.findById({ _id: user.userStats });
+    if (!userStats) return next();
+
+    userStats.products.in_progress++;
+    userStats.save();
+
+    return next();
+  } catch (err) {
+    return next(ApiError(err.message, 500));
+  }
 });
 productSchema.plugin(mongoosePaginate);
 export default mongoose.model("Product", productSchema);

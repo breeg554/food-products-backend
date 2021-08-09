@@ -1,6 +1,6 @@
 import express from "express";
-import verifyToken from "../verify-token.js";
-import autorizeAccess from "../autorizeAccess.js";
+import verifyToken from "../middlewares/verify-token.js";
+import autorizeAccess from "../middlewares/autorizeAccess.js";
 import {
   token,
   logout,
@@ -9,6 +9,9 @@ import {
   getUserDetails,
   getAll,
   signInAnonymous,
+  updateUserDetails,
+  checkIfUsernameIsTaken,
+  getUserStats,
 } from "../controllers/user.js";
 const router = express.Router();
 
@@ -17,7 +20,10 @@ router.post("/signin", signIn);
 router.post("/signin/anonymous", signInAnonymous);
 router.post("/token", token);
 router.post("/logout", logout);
+router.post("/username", checkIfUsernameIsTaken);
 router.get("/user", verifyToken, getUserDetails);
-router.get("/users/all", verifyToken, autorizeAccess(["admin"]), getAll);
+router.get("/user/:id/statistic", verifyToken, getUserStats);
+// router.get("/users/all", verifyToken, autorizeAccess(["admin"]), getAll);
+router.put("/user", verifyToken, updateUserDetails);
 
 export default router;

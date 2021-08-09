@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import ApiError from "./utils/ApiError.js";
-import { ACCESS_TOKEN_SECRET } from "./config/jwt.js";
+import ApiError from "../utils/ApiError.js";
+import { ACCESS_TOKEN_SECRET } from "../config/jwt.js";
 
 const verifyToken = (req, res, next) => {
   // const token = req.header("Authorization");

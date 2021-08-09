@@ -1,4 +1,4 @@
-import { create, get } from "../controllers/tags.js";
+import { create, get } from "../controllers/productCategories.js";
 import express from "express";
 import verifyToken from "../middlewares/verify-token.js";
 import autorizeAccess from "../middlewares/autorizeAccess.js";

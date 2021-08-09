@@ -1,4 +1,4 @@
-import Category from "../models/category.js";
+import Category from "../models/productCategories.js";
 import ApiError from "../utils/ApiError.js";
 
 export const create = (req, res, next) => {

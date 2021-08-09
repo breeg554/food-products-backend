@@ -15,6 +15,13 @@ const userSchema = new Schema({
     minLength: 2,
     maxLength: 100,
   },
+  initials: {
+    type: String,
+    required: true,
+    minLength: 2,
+    maxLength: 10,
+  },
+
   email: {
     type: String,
     required: true,
@@ -22,9 +29,24 @@ const userSchema = new Schema({
     minLength: 5,
     maxLength: 200,
   },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    minLength: 4,
+    maxLength: 60,
+  },
   password: {
     type: String,
     required: true,
+  },
+  userStats: {
+    type: Schema.Types.ObjectId,
+    ref: "UserStats",
+  },
+  isBlocked: {
+    type: Boolean,
+    default: false,
   },
   isAnonymous: {
     type: Boolean,
@@ -35,10 +57,14 @@ const userSchema = new Schema({
     enum: ["admin", "user"],
     default: "user",
   },
-  createdAt: {
-    type: Date,
-    default: Date.now(),
-  },
+  // stats: {
+  //   reputation: {
+  //     type: Number,
+  //     default: 0
+  //   },
+
+  // }
 });
+userSchema.set("timestamps", true);
 userSchema.plugin(mongoosePaginate);
 export default mongoose.model("User", userSchema);

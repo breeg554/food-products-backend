@@ -14,4 +14,4 @@ const categorySchema = new Schema({
     default: Date.now(),
   },
 });
-export default mongoose.model("Category", categorySchema);
+export default mongoose.model("ProductCategories", categorySchema);
