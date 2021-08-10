@@ -52,6 +52,7 @@ export async function updateStatsAfterUpdateProductStatus(_userId, currentStatus
         }
       }
     }
+
     stats.reputation = stats.products.productsRep + stats.meal.mealRep;
     stats.save();
   } catch (err) {

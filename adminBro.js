@@ -69,6 +69,44 @@ const adminBro = new AdminBro({
               };
             },
           },
+          AcceptProduct: {
+            actionType: "record",
+            component: false,
+            isVisible: (context) => context.record.param("status") === "in_progress",
+            handler: async (request, response, context) => {
+              const { record, resource, currentAdmin, h, translateMessage } = context;
+              if (!request.params.recordId || !record) {
+                throw new NotFoundError(['You have to pass "recordId" to update Action'].join("\n"), "Action#handler");
+              }
+
+              const newRecord = record.params;
+              newRecord.status = "accepted";
+
+              try {
+                await record.update(newRecord);
+              } catch (error) {
+                if (error instanceof ValidationError && error.baseError) {
+                  return {
+                    record: record.toJSON(currentAdmin),
+                    notice: {
+                      message: error.baseError.message,
+                      type: "error",
+                    },
+                  };
+                }
+                throw error;
+              }
+              UserStats.updateStatsAfterUpdateProductStatus(record.params._authorId, "accepted", "in_progress");
+              return {
+                redirectUrl: h.resourceUrl({ resourceId: resource._decorated?.id() || resource.id() }),
+                notice: {
+                  message: translateMessage("successfullyUpdated", resource.id()),
+                  type: "success",
+                },
+                record: record.toJSON(currentAdmin),
+              };
+            },
+          },
         },
       },
     },
