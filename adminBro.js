@@ -8,6 +8,9 @@ import Product from "./models/product.js";
 import Tags from "./models/tags.js";
 import UnitOfMeasure from "./models/unitOfMeasure.js";
 import ProductCategories from "./models/productCategories.js";
+import RecipeCategories from "./models/recipeCategories.js";
+import Recipe from "./models/recipe.js";
+import DietType from "./models/dietType.js";
 import Token from "./models/token.js";
 import { ACCESS_TOKEN_SECRET } from "./config/jwt.js";
 
@@ -17,6 +20,9 @@ const adminBro = new AdminBro({
   resources: [
     User,
     // Product,
+    Recipe,
+    RecipeCategories,
+    DietType,
     Tags,
     UnitOfMeasure,
     ProductCategories,
