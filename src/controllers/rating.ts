@@ -19,19 +19,19 @@ export const get = (req: Request, res: Response, next: NextFunction) => {
   //     res.status(200).json(categories);
   //   });
 };
-export const rateRecipe = async (req: Request, res: Response, next: NextFunction) => {
+export const rate = async (req: Request, res: Response, next: NextFunction) => {
   const { userId, recipeId, rateValue } = req.body;
   if (!userId || !recipeId || !rateValue) return next(new ApiError("Enter the required data", 400));
 
   const ratedBefore = await Rating.find({ _userId: userId, _recipeId: recipeId }).count();
-  console.log(ratedBefore);
+
   if (!ratedBefore) {
     const rate = new Rating({
       _userId: userId,
       _recipeId: recipeId,
       rating: rateValue,
     });
-    console.log(rate);
+
     rate.save((err: any, inserted: RatingType) => {
       if (err || !inserted) return next(new ApiError(err.message, 500));
 

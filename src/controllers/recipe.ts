@@ -14,6 +14,7 @@ export const get = (_req: Request, res: Response, next: NextFunction) => {
     res.status(200).json(recipes);
   });
 };
+
 export const getRecipe = async (req: any, res: Response, next: NextFunction) => {
   const { recipeId } = req.params;
 
@@ -46,6 +47,13 @@ export const getRecipe = async (req: any, res: Response, next: NextFunction) => 
     next(err);
   }
 };
+
+const POPULATE_OPTIONS = [
+  { path: "dietTypes", select: "_id name" },
+  { path: "category", select: "_id name" },
+  { path: "tags", select: "_id name" },
+];
+
 export const getUserRecipes = (req: Request, res: Response, next: NextFunction) => {
   const { userId } = req.params;
   if (!userId) return next(new ApiError("Enter the user id", 400));
@@ -54,11 +62,7 @@ export const getUserRecipes = (req: Request, res: Response, next: NextFunction) 
   if (!pageSize) pageSize = 10;
 
   const options = {
-    populate: [
-      { path: "dietTypes", select: "_id name" },
-      { path: "category", select: "_id name" },
-      { path: "tags", select: "_id name" },
-    ],
+    populate: POPULATE_OPTIONS,
     page,
     limit: pageSize,
     createdAt: "-1",
@@ -77,8 +81,8 @@ export const create = (req: Request, res: Response, next: NextFunction) => {
   cloudinary.uploader.upload(req.body.image, cloudOptions, (err, image) => {
     if (err || !image) return next(new ApiError(err.message, 500));
     const fromCloud = {
-      small: image.url,
-      medium: image.eager[0]?.url,
+      small: image.eager[0]?.url,
+      medium: image.url,
     };
     const nutrition = calculateRecipeNutrition(ingredients);
     const newRecipe = new Recipe({
@@ -155,4 +159,48 @@ export const changeRecipeStatus = async (req: Request, res: Response, next: Next
   } catch (err) {
     next(err);
   }
+};
+
+export const getTopRatedRecipes = (req: Request, res: Response, next: NextFunction) => {
+  let { page, pageSize }: any = req.query;
+
+  if (!page || isNaN(page)) page = 1;
+  if (!pageSize || isNaN(pageSize)) pageSize = 10;
+  pageSize = Number.parseInt(pageSize);
+  Recipe.aggregate(
+    [
+      { $match: { isPublic: true } },
+      {
+        $set: {
+          "rating.rateAvg": {
+            $cond: [{ $eq: ["$rating.rateCount", 0] }, 0, { $divide: ["$rating.rateValue", "$rating.rateCount"] }],
+          },
+        },
+      },
+      { $sort: { "rating.rateAvg": -1 } },
+      { $skip: pageSize * (page - 1) },
+      { $limit: pageSize },
+    ],
+    (err: any, recipes: any) => {
+      if (err || !recipes) return next(new ApiError(err.message, 500));
+      Recipe.populate(recipes, POPULATE_OPTIONS, (err, results) => {
+        if (err || !results) return next(new ApiError(err.message, 500));
+        res.status(200).json(recipes);
+      });
+    }
+  );
+};
+
+export const getQuickMeals = (req: Request, res: Response, next: NextFunction) => {
+  let { page, pageSize }: any = req.query;
+  if (!page || isNaN(page)) page = 1;
+  if (!pageSize || isNaN(pageSize)) pageSize = 10;
+  pageSize = Number.parseInt(pageSize);
+  Recipe.find({ isPublic: true, readyInMinutes: { $lt: 35 } })
+    .skip(pageSize * (page - 1))
+    .limit(pageSize)
+    .exec((err: any, recipes: any) => {
+      if (err || !recipes) return next(new ApiError(err.message, 500));
+      res.status(200).json(recipes);
+    });
 };
