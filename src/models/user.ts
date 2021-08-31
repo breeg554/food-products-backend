@@ -57,6 +57,10 @@ const userSchema = new Schema({
     enum: ["admin", "user"],
     default: "user",
   },
+  favoriteRecipes: {
+    type: [{ type: Schema.Types.ObjectId, ref: "Recipe" }],
+    default: [],
+  },
   // stats: {
   //   reputation: {
   //     type: Number,

@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from "express";
 import Product from "../models/product";
 import ApiError from "../utils/ApiError";
 import { nutritionProductSort, productStatus } from "../services/product";
@@ -8,7 +9,7 @@ import {
   DAILY_REQUIREMENT_OF_FAT,
 } from "../utils/caloricConsts";
 
-export const create = (req: any, res: any, next: any) => {
+export const create = (req: Request, res: Response, next: NextFunction) => {
   const sumOfCaloricBreakDown = req.body.protein * 4 + req.body.fat * 9 + req.body.carb * 4;
 
   const newProduct = new Product({
@@ -105,7 +106,7 @@ export const getByUserId = (req: any, res: any, next: any) => {
     res.status(200).json(products);
   });
 };
-export const updateById = async (req: any, res: any, next: any) => {
+export const updateById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let { id } = req.params;
     Product.updateOne({ _id: id }, { name: "ccc" });

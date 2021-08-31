@@ -10,6 +10,7 @@ import UnitOfMeasure from "./models/unitOfMeasure";
 import ProductCategories from "./models/productCategories";
 import RecipeCategories from "./models/recipeCategories";
 import Recipe from "./models/recipe";
+import Rating from "./models/rating";
 import DietType from "./models/dietType";
 import Token from "./models/token";
 import { ACCESS_TOKEN_SECRET } from "./config/jwt";
@@ -21,6 +22,7 @@ const adminBro = new AdminBro({
     User,
     // Product,
     Recipe,
+    Rating,
     RecipeCategories,
     DietType,
     Tags,

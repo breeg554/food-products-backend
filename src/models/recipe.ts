@@ -12,8 +12,8 @@ const recipeSchema = new Schema({
     maxLength: 200,
   },
   image: {
-    type: String,
-    required: false,
+    small: { type: String, required: false },
+    medium: { type: String, required: false },
   },
   servings: {
     type: Number,
@@ -159,9 +159,10 @@ const recipeSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["accepted", "rejected", "in_progress"],
-    default: "in_progress",
+    enum: ["private", "rejected", "in_progress", "public"],
+    default: "private",
   },
+
   _authorId: {
     type: Schema.Types.ObjectId,
     required: true,

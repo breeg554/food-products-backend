@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import UserStats from "../models/userStats";
@@ -8,7 +9,7 @@ import ApiError from "../utils/ApiError";
 import { getUserDataForResponse } from "../services/user";
 import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from "../config/jwt";
 
-const COOKIE_OPTIONS = {
+const COOKIE_OPTIONS: any = {
   httpOnly: true,
   sameSite: "none",
   secure: true,
@@ -19,7 +20,7 @@ const generateAccessToken = (payload: any) => {
     expiresIn: "60sec",
   });
 };
-export const token = async (req: any, res: any, next: any) => {
+export const token = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let refreshToken = req.cookies.refreshToken;
     if (!refreshToken) throw new ApiError("Access denied", 401);
@@ -39,7 +40,7 @@ export const token = async (req: any, res: any, next: any) => {
     next(err);
   }
 };
-export const logout = async (req: any, res: any, next: any) => {
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let _userId = req.body.id;
 
@@ -56,7 +57,7 @@ export const logout = async (req: any, res: any, next: any) => {
   }
 };
 
-export const signUp = async (req: any, res: any, next: any) => {
+export const signUp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, surname, email, password, username } = req.body;
 
@@ -93,7 +94,7 @@ export const signUp = async (req: any, res: any, next: any) => {
     next(err);
   }
 };
-export const signInAnonymous = async (req: any, res: any, next: any) => {
+export const signInAnonymous = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const uuid = uuidv4();
     const salt = await bcrypt.genSalt(10);
@@ -136,7 +137,7 @@ export const signInAnonymous = async (req: any, res: any, next: any) => {
   }
 };
 
-export const signIn = async (req: any, res: any, next: any) => {
+export const signIn = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
 
@@ -173,7 +174,7 @@ export const signIn = async (req: any, res: any, next: any) => {
   }
 };
 
-export const getUserDetails = async (req: any, res: any, next: any) => {
+export const getUserDetails = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let { _id } = req.user;
 
@@ -187,7 +188,7 @@ export const getUserDetails = async (req: any, res: any, next: any) => {
     next(err);
   }
 };
-export const updateUserDetails = (req: any, res: any, next: any) => {
+export const updateUserDetails = (req: Request, res: Response, next: NextFunction) => {
   try {
     let { _id } = req.user;
 
@@ -199,13 +200,13 @@ export const updateUserDetails = (req: any, res: any, next: any) => {
     next(err);
   }
 };
-export const getAll = (req: any, res: any, next: any) => {
+export const getAll = (_req: Request, res: Response, next: NextFunction) => {
   User.paginate({}, { page: 1, limit: 5 }, (err: any, users: any) => {
     if (err) return next(new ApiError(err.message, 400));
     res.status(200).json(users);
   });
 };
-export const checkIfUsernameIsTaken = async (req: any, res: any, next: any) => {
+export const checkIfUsernameIsTaken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username } = req.body;
     const userDetails = await User.findOne({ username });
@@ -217,7 +218,7 @@ export const checkIfUsernameIsTaken = async (req: any, res: any, next: any) => {
   }
 };
 
-export const getUserStats = (req: any, res: any, next: any) => {
+export const getUserStats = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
   UserStats.findById({ _id: id }, (err: any, userStats: any) => {

@@ -1,7 +1,8 @@
+import { Request, Response, NextFunction } from "express";
 import Category from "../models/productCategories";
 import ApiError from "../utils/ApiError";
 
-export const create = (req: any, res: any, next: any) => {
+export const create = (req: Request, res: Response, next: NextFunction) => {
   const newCategory = new Category(req.body);
 
   newCategory.save((err: any, cat: any) => {
@@ -9,7 +10,7 @@ export const create = (req: any, res: any, next: any) => {
     res.status(201).json(cat);
   });
 };
-export const get = (req: any, res: any, next: any) => {
+export const get = (_req: Request, res: Response, next: NextFunction) => {
   Category.find({})
     .select("_id name")
     .exec((err: any, categories: any) => {
