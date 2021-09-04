@@ -57,8 +57,7 @@ export const get = (req: any, res: any, next: any) => {
 
   let query = search ? { name: { $regex: search, $options: "i" } } : {};
   //@ts-ignore
-  query = status ? { ...query, status } : { ...query };
-
+  query = status ? { ...query, status: { $in: status } } : { ...query };
   const sort = sortColumn ? nutritionProductSort(sortColumn, order) : "";
 
   const options = {
@@ -72,6 +71,7 @@ export const get = (req: any, res: any, next: any) => {
     sort,
   };
 
+  //@ts-ignore
   Product.paginate(query, options, (err: any, products: any) => {
     if (err) return next(new ApiError(err.message, 500));
 
@@ -88,7 +88,7 @@ export const getByUserId = (req: any, res: any, next: any) => {
   if (!pageSize) pageSize = 5;
   if (status && !productStatus.includes(status)) return next(new ApiError("Bad product status", 400));
 
-  const query = status ? { _authorId: userId, status } : { _authorId: userId };
+  const query = status ? { _authorId: userId, status: { $in: status } } : { _authorId: userId };
 
   const options = {
     populate: [
@@ -100,7 +100,8 @@ export const getByUserId = (req: any, res: any, next: any) => {
     limit: pageSize,
     createdAt: "-1",
   };
-
+  // const productAggregate = Product.aggregate([{ $match: { ...query } }]);
+  //@ts-ignore
   Product.paginate(query, options, (err: any, products: any) => {
     if (err) return next(new ApiError(err.message, 500));
     res.status(200).json(products);

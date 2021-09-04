@@ -9,7 +9,9 @@ import {
   toggleFavoriteRecipe,
   changeRecipeStatus,
   getTopRatedRecipes,
-  getQuickMeals,
+  getQuickRecipes,
+  getRecipesByCategory,
+  getRecipesByDiet,
 } from "../controllers/recipe";
 const router = express.Router();
 
@@ -17,10 +19,12 @@ const router = express.Router();
 router.post("/", verifyToken, autorizeAccess(["admin", "user"]), create);
 router.post("/status", verifyToken, autorizeAccess(["admin", "user"]), changeRecipeStatus);
 router.post("/favorite", verifyToken, toggleFavoriteRecipe);
-router.get("/", verifyToken, autorizeAccess(["admin", "user"]), get);
+router.get("/", verifyToken, get);
+router.get("/categories/:name", verifyToken, getRecipesByCategory);
+router.get("/diet/:name", verifyToken, getRecipesByDiet); // ???
 router.get("/userRecipes/:userId", verifyToken, getUserRecipes);
 router.get("/topRated", verifyToken, getTopRatedRecipes);
-router.get("/quick", verifyToken, getQuickMeals);
+router.get("/quick", verifyToken, getQuickRecipes);
 router.get("/:recipeId", verifyToken, autorizeAccess(["admin", "user"]), getRecipe);
 
 export default router;

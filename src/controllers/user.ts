@@ -201,10 +201,10 @@ export const updateUserDetails = (req: Request, res: Response, next: NextFunctio
   }
 };
 export const getAll = (_req: Request, res: Response, next: NextFunction) => {
-  User.paginate({}, { page: 1, limit: 5 }, (err: any, users: any) => {
-    if (err) return next(new ApiError(err.message, 400));
-    res.status(200).json(users);
-  });
+  // User.paginate({}, { page: 1, limit: 5 }, (err: any, users: any) => {
+  //   if (err) return next(new ApiError(err.message, 400));
+  //   res.status(200).json(users);
+  // });
 };
 export const checkIfUsernameIsTaken = async (req: Request, res: Response, next: NextFunction) => {
   try {

@@ -1,5 +1,8 @@
+import mongoose from "mongoose";
 import { Request, Response, NextFunction } from "express";
 import Recipe from "../models/recipe";
+import RecipeCategories from "../models/recipeCategories";
+import DietType from "../models/dietType";
 import User from "../models/user";
 import ApiError from "../utils/ApiError";
 import cloudConfig from "../config/cloudinary";
@@ -7,10 +10,29 @@ import cloudinary from "../cloudinary";
 import { calculateRecipeNutrition } from "../services/recipe";
 import { RecipeType } from "../types";
 
-export const get = (_req: Request, res: Response, next: NextFunction) => {
-  Recipe.paginate({}, {}, (err, recipes) => {
-    if (err) return next(new ApiError(err.message, 500));
+const POPULATE_OPTIONS = [
+  { path: "dietTypes", select: "_id name" },
+  { path: "category", select: "_id name" },
+  { path: "tags", select: "_id name" },
+];
 
+export const get = (req: Request, res: Response, next: NextFunction) => {
+  let { page, pageSize, search }: any = req.query;
+  if (!page || isNaN(page)) page = 1;
+  if (!pageSize || isNaN(pageSize)) pageSize = 10;
+  pageSize = Number.parseInt(pageSize);
+
+  let query = search ? { name: { $regex: search, $options: "i" } } : {};
+
+  const options = {
+    populate: POPULATE_OPTIONS,
+    page,
+    limit: pageSize,
+  };
+
+  //@ts-ignore
+  Recipe.paginate(query, options, (err: any, recipes: any) => {
+    if (err || !recipes) return next(new ApiError(err.message, 500));
     res.status(200).json(recipes);
   });
 };
@@ -48,14 +70,8 @@ export const getRecipe = async (req: any, res: Response, next: NextFunction) => 
   }
 };
 
-const POPULATE_OPTIONS = [
-  { path: "dietTypes", select: "_id name" },
-  { path: "category", select: "_id name" },
-  { path: "tags", select: "_id name" },
-];
-
 export const getUserRecipes = (req: Request, res: Response, next: NextFunction) => {
-  const { userId } = req.params;
+  let { userId } = req.params;
   if (!userId) return next(new ApiError("Enter the user id", 400));
   let { page, pageSize }: any = req.query;
   if (!page) page = 1;
@@ -67,8 +83,10 @@ export const getUserRecipes = (req: Request, res: Response, next: NextFunction) 
     limit: pageSize,
     createdAt: "-1",
   };
-  Recipe.paginate({ _authorId: userId, status: { $ne: "rejected" } }, options, (err: any, recipes: any) => {
-    if (err) return next(new ApiError(err.message, 500));
+  const idObj: Object = mongoose.Types.ObjectId(userId);
+  //@ts-ignore
+  Recipe.paginate({ _authorId: idObj, status: { $ne: "rejected" } }, options, (err: any, recipes: any) => {
+    if (err || !recipes) return next(new ApiError(err.message, 500));
     res.status(200).json(recipes);
   });
 };
@@ -167,40 +185,111 @@ export const getTopRatedRecipes = (req: Request, res: Response, next: NextFuncti
   if (!page || isNaN(page)) page = 1;
   if (!pageSize || isNaN(pageSize)) pageSize = 10;
   pageSize = Number.parseInt(pageSize);
-  Recipe.aggregate(
-    [
-      { $match: { isPublic: true } },
-      {
-        $set: {
-          "rating.rateAvg": {
-            $cond: [{ $eq: ["$rating.rateCount", 0] }, 0, { $divide: ["$rating.rateValue", "$rating.rateCount"] }],
-          },
+
+  const options = {
+    page,
+    limit: pageSize,
+  };
+  const recipeAggregate = Recipe.aggregate([
+    { $match: { isPublic: true } },
+    {
+      $set: {
+        "rating.rateAvg": {
+          $cond: [{ $eq: ["$rating.rateCount", 0] }, 0, { $divide: ["$rating.rateValue", "$rating.rateCount"] }],
         },
       },
-      { $sort: { "rating.rateAvg": -1 } },
-      { $skip: pageSize * (page - 1) },
-      { $limit: pageSize },
-    ],
-    (err: any, recipes: any) => {
-      if (err || !recipes) return next(new ApiError(err.message, 500));
-      Recipe.populate(recipes, POPULATE_OPTIONS, (err, results) => {
-        if (err || !results) return next(new ApiError(err.message, 500));
-        res.status(200).json(recipes);
-      });
-    }
-  );
+    },
+    { $sort: { "rating.rateAvg": -1 } },
+  ]);
+
+  Recipe.aggregatePaginate(recipeAggregate, options, (err: any, recipes: any) => {
+    if (err || !recipes) return next(new ApiError(err.message, 500));
+    Recipe.populate(recipes, POPULATE_OPTIONS, (err, results) => {
+      if (err || !results) return next(new ApiError(err.message, 500));
+      res.status(200).json(recipes);
+    });
+  });
 };
 
-export const getQuickMeals = (req: Request, res: Response, next: NextFunction) => {
+export const getQuickRecipes = (req: Request, res: Response, next: NextFunction) => {
   let { page, pageSize }: any = req.query;
   if (!page || isNaN(page)) page = 1;
   if (!pageSize || isNaN(pageSize)) pageSize = 10;
   pageSize = Number.parseInt(pageSize);
-  Recipe.find({ isPublic: true, readyInMinutes: { $lt: 35 } })
-    .skip(pageSize * (page - 1))
-    .limit(pageSize)
-    .exec((err: any, recipes: any) => {
+
+  const options = {
+    populate: POPULATE_OPTIONS,
+    page,
+    limit: pageSize,
+    createdAt: "-1",
+  };
+
+  //@ts-ignore
+  Recipe.paginate({ isPublic: true, readyInMinutes: { $lt: 35 } }, options, (err: any, recipes: any) => {
+    if (err || !recipes) return next(new ApiError(err.message, 500));
+    res.status(200).json(recipes);
+  });
+};
+
+export const getRecipesByCategory = async (req: Request, res: Response, next: NextFunction) => {
+  const { name } = req.params;
+  if (!name) return next(new ApiError("Enter the category", 400));
+
+  let { page, pageSize, search }: any = req.query;
+  if (!page || isNaN(page)) page = 1;
+  if (!pageSize || isNaN(pageSize)) pageSize = 10;
+  pageSize = Number.parseInt(pageSize);
+
+  try {
+    const category = await RecipeCategories.findOne({ name });
+    if (!category) throw new ApiError("Category not found", 404);
+
+    const options = {
+      populate: POPULATE_OPTIONS,
+      page,
+      limit: pageSize,
+      createdAt: "-1",
+    };
+    let query = search ? { name: { $regex: search, $options: "i" } } : {};
+
+    //@ts-ignore
+    Recipe.paginate({ category: category._id, isPublic: true, ...query }, options, (err: any, recipes: any) => {
       if (err || !recipes) return next(new ApiError(err.message, 500));
       res.status(200).json(recipes);
     });
+  } catch (err) {
+    next(err);
+  }
+};
+export const getRecipesByDiet = async (req: Request, res: Response, next: NextFunction) => {
+  const { name } = req.params;
+  if (!name) return next(new ApiError("Enter the diet name", 400));
+
+  let { page, pageSize }: any = req.query;
+  if (!page || isNaN(page)) page = 1;
+  if (!pageSize || isNaN(pageSize)) pageSize = 10;
+  pageSize = Number.parseInt(pageSize);
+
+  try {
+    const diet = await DietType.findOne({ name });
+    if (!diet) throw new ApiError("Diet not found", 404);
+
+    const options = {
+      populate: POPULATE_OPTIONS,
+      page,
+      limit: pageSize,
+      createdAt: "-1",
+    };
+    //@ts-ignore
+    Recipe.paginate(
+      { dietTypes: { $elemMatch: { _id: diet._id } }, isPublic: true },
+      options,
+      (err: any, recipes: any) => {
+        if (err || !recipes) return next(new ApiError(err.message, 500));
+        res.status(200).json(recipes);
+      }
+    );
+  } catch (err) {
+    next(err);
+  }
 };

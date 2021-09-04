@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import ApiError from "../utils/ApiError";
 
 const { Schema } = mongoose;
@@ -174,5 +175,6 @@ const recipeSchema = new Schema({
   },
 });
 
+recipeSchema.plugin(aggregatePaginate);
 recipeSchema.plugin(mongoosePaginate);
 export default mongoose.model("Recipe", recipeSchema);

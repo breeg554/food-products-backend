@@ -57,9 +57,11 @@ export interface RecipeRatingType {
   rateValue: number;
   rateAvg: number;
 }
+
 export interface IngredientType {
-  product: ProductType;
+  product: ProductType | string;
   amount: number;
+  bought?: boolean;
 }
 export interface PreparationStepType {
   instruction: string;
@@ -107,4 +109,15 @@ export interface RatingType {
   _userId: string;
   _recipeId: string;
   rating: [0, 1, 2, 3, 4, 5];
+}
+export interface ShoppingListType {
+  createdAt: Date;
+  date: Date | null;
+  ingredients: IngredientType[];
+  _id: string;
+  _userId: string;
+  _mealPlanId: string;
+  instruction: string;
+  step: number;
+  isClearRequested: boolean;
 }
