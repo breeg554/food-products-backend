@@ -8,6 +8,7 @@ import recipe from "./recipe";
 import recipeCategories from "./recipeCategories";
 import rating from "./rating";
 import dietType from "./dietType";
+import mealPlan from "./mealPlan";
 import shoppingList from "./shoppingList";
 
 const router = express.Router();
@@ -20,6 +21,7 @@ router.use("/recipeCategories", recipeCategories);
 router.use("/rating", rating);
 router.use("/dietType", dietType);
 router.use("/shoppingList", shoppingList);
+router.use("/mealPlan", mealPlan);
 router.use("/", user);
 
 export default router;

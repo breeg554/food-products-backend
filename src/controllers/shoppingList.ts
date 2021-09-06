@@ -4,15 +4,17 @@ import ShoppingList from "../models/shoppingList";
 import ApiError from "../utils/ApiError";
 
 export const updateFreeShoppingList = async (req: Request, res: Response, next: NextFunction) => {
-  let { ingredients, mealPanId, date } = req.body;
+  let { ingredients, mealPanId } = req.body;
   let { user } = req;
   if (!ingredients) return next(new ApiError("Missing ingredients attribute", 400));
   if (mealPanId === undefined) mealPanId = null;
-  if (date === undefined) date = null;
-  const query: any = { _userId: user._id, _mealPlanId: null, date: null };
+  // if (date === undefined) date = null;
+  // const query: any = { _userId: user._id, _mealPlanId: null, date: null };
+  const query: any = { _userId: user._id, _mealPlanId: null };
 
   try {
     const shoppingList = await ShoppingList.findOne(query);
+
     if (shoppingList) {
       let tmpIngredients: IngredientType[] = [...shoppingList.ingredients];
 
@@ -41,13 +43,13 @@ export const updateFreeShoppingList = async (req: Request, res: Response, next: 
   }
 };
 export const getShoppingList = (req: Request, res: Response, next: NextFunction) => {
-  let { mealPlanId, date } = req.body;
+  let { mealPlanId } = req.body;
   let { user } = req;
 
   if (!mealPlanId) mealPlanId = null;
-  if (!date) date = null;
+  // if (!date) date = null;
 
-  const query: any = { _userId: user._id, _mealPlanId: mealPlanId, date: date };
+  const query: any = { _userId: user._id, _mealPlanId: mealPlanId };
   ShoppingList.findOne(query)
     .populate([
       {

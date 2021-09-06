@@ -11,9 +11,6 @@ const shoppingListSchema = new Schema({
     required: true,
     ref: "User",
   },
-  date: {
-    type: Date,
-  },
 
   ingredients: [
     {
@@ -39,7 +36,7 @@ const shoppingListSchema = new Schema({
     default: false,
   },
 });
-shoppingListSchema.index({ _userId: 1, _mealPlanId: 1, date: 1 }, { unique: true });
+shoppingListSchema.index({ _userId: 1, _mealPlanId: 1 }, { unique: true });
 const ShoppingList = mongoose.model("ShoppingList", shoppingListSchema);
 
 export default ShoppingList;
