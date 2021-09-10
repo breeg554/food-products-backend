@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import MealPlanDay from "./mealPlanDay";
 const { Schema } = mongoose;
 
 const mealPlanSchema = new Schema({
@@ -17,14 +18,8 @@ const mealPlanSchema = new Schema({
   },
   days: [
     {
-      dayNumber: { type: Number, min: 1, max: 7, unique: true },
-      date: Date,
-      meals: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: "Recipe",
-        },
-      ],
+      type: Schema.Types.ObjectId,
+      ref: MealPlanDay,
     },
   ],
   isComplete: {

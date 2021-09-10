@@ -70,3 +70,8 @@ export const getSunday = (d: Date, format?: string) => {
     diff = d.getDate() - day + (day === 0 ? 0 : +7);
   return dateFormat(d.setDate(diff), format ? format : "isoDate");
 };
+export const addDays = (originalDate: string, days: number) => {
+  let cloneDate = new Date(originalDate.valueOf());
+  cloneDate.setDate(cloneDate.getDate() + days);
+  return dateFormat(cloneDate, "isoDate");
+};
