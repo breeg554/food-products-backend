@@ -112,12 +112,29 @@ export interface RatingType {
 }
 export interface ShoppingListType {
   createdAt: Date;
-  date: Date | null;
   ingredients: IngredientType[];
   _id: string;
   _userId: string;
-  _mealPlanId: string;
-  instruction: string;
-  step: number;
   isClearRequested: boolean;
+}
+export interface MealPlanDaySingleMealType {
+  recipe: RecipeType;
+  mealNumber: number;
+  servings: number;
+}
+export interface MealPlanDayType {
+  _id?: string;
+  date: string;
+  dayNumber: number;
+  meals: MealPlanDaySingleMealType[];
+}
+export interface MealPlanType {
+  createdAt: Date;
+  endDate: Date | string;
+  startDate: Date | string;
+  isComplete: boolean;
+
+  _id: string;
+  _userId: string;
+  days: MealPlanDayType[];
 }

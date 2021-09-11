@@ -22,7 +22,19 @@ export const getMealPlanByDate = async (req: Request, res: Response, next: NextF
       return res.status(200).json(mealPlan);
     });
 };
+export const getUserMealPlans = async (req: Request, res: Response, next: NextFunction) => {
+  const { user } = req;
 
+  MealPlan.find({
+    _userId: user._id,
+  })
+    .sort("-endDate")
+    .populate([{ path: "days", model: "MealPlanDay" }])
+    .exec(async (err: any, mealPlan: any) => {
+      if (err) return next(new ApiError(err.message, 500));
+      return res.status(200).json(mealPlan);
+    });
+};
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   let mealPlan = req.body;
   const { user } = req;

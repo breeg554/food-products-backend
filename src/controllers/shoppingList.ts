@@ -1,19 +1,18 @@
 import { Request, Response, NextFunction } from "express";
-import { IngredientType, ShoppingListType } from "../types";
+import { IngredientType, MealPlanDayType, MealPlanType, ShoppingListType } from "../types";
+import { getShoppingListIngredientsFromMealPlanDay } from "../services/shoppingList";
 import ShoppingList from "../models/shoppingList";
+import MealPlan from "../models/mealPlan";
+import MealPlanDay from "../models/mealPlanDay";
 import ApiError from "../utils/ApiError";
 
-export const updateFreeShoppingList = async (req: Request, res: Response, next: NextFunction) => {
-  let { ingredients, mealPanId } = req.body;
+export const updateShoppingList = async (req: Request, res: Response, next: NextFunction) => {
+  let { ingredients } = req.body;
   let { user } = req;
   if (!ingredients) return next(new ApiError("Missing ingredients attribute", 400));
-  if (mealPanId === undefined) mealPanId = null;
-  // if (date === undefined) date = null;
-  // const query: any = { _userId: user._id, _mealPlanId: null, date: null };
-  const query: any = { _userId: user._id, _mealPlanId: null };
 
   try {
-    const shoppingList = await ShoppingList.findOne(query);
+    const shoppingList = await ShoppingList.findOne({ _userId: user._id });
 
     if (shoppingList) {
       let tmpIngredients: IngredientType[] = [...shoppingList.ingredients];
@@ -32,7 +31,7 @@ export const updateFreeShoppingList = async (req: Request, res: Response, next: 
         res.status(200).json(shoppingList);
       });
     } else {
-      const newShoppingList = new ShoppingList({ _mealPlanId: null, _userId: user._id, ingredients, date: null });
+      const newShoppingList = new ShoppingList({ _userId: user._id, ingredients });
       newShoppingList.save((err: any, shoppingList: any) => {
         if (err || !shoppingList) return next(new ApiError(err.message, 500));
         res.status(201).json(shoppingList);
@@ -42,15 +41,73 @@ export const updateFreeShoppingList = async (req: Request, res: Response, next: 
     next(err);
   }
 };
-export const getShoppingList = (req: Request, res: Response, next: NextFunction) => {
-  let { mealPlanId } = req.body;
+
+export const generateListFromMealPlan = async (req: Request, res: Response, next: NextFunction) => {
+  let { mealPlanId, mealPlanDayId } = req.body;
   let { user } = req;
+  if (!mealPlanId) return next(new ApiError("mealPlanId is required", 400));
 
-  if (!mealPlanId) mealPlanId = null;
-  // if (!date) date = null;
+  try {
+    let shoppingListIngredients: IngredientType[] = [];
+    if (!mealPlanDayId) {
+      const mealPlan: MealPlanType = await MealPlan.findById({
+        _id: mealPlanId,
+      }).populate([
+        {
+          path: "days",
+          model: "MealPlanDay",
+          populate: { path: "meals.recipe" },
+        },
+      ]);
 
-  const query: any = { _userId: user._id, _mealPlanId: mealPlanId };
-  ShoppingList.findOne(query)
+      if (!mealPlan) return next(new ApiError("MealPlan not found", 404));
+
+      const days = [...mealPlan.days];
+
+      days.forEach((day) => {
+        shoppingListIngredients = getShoppingListIngredientsFromMealPlanDay(day, shoppingListIngredients);
+      });
+    } else {
+      const mealPlanDay: MealPlanDayType = await MealPlanDay.findById({
+        _id: mealPlanDayId,
+      }).populate([
+        {
+          path: "meals.recipe",
+        },
+      ]);
+      if (!mealPlanDay) return next(new ApiError("MealPlanDay not found", 404));
+      shoppingListIngredients = getShoppingListIngredientsFromMealPlanDay(mealPlanDay, shoppingListIngredients);
+    }
+
+    const options = { upsert: true, new: true, setDefaultsOnInsert: true };
+    ShoppingList.findOneAndUpdate(
+      { _userId: user._id },
+      { _userId: user._id, ingredients: shoppingListIngredients },
+      options
+    )
+      .populate([
+        {
+          path: "ingredients.product",
+          populate: [
+            { path: "category", select: "_id name" },
+            { path: "unitOfMeasure", select: "_id name" },
+            { path: "tags", select: "_id name" },
+          ],
+        },
+      ])
+      .exec((err: any, newList: ShoppingListType) => {
+        if (err || !newList) return next(new ApiError(err.message, 500));
+        res.status(200).json(newList);
+      });
+  } catch (err) {
+    next(err);
+  }
+};
+export const getShoppingList = (req: Request, res: Response, next: NextFunction) => {
+  let { userId } = req.body;
+  if (!userId) return next(new ApiError("userId is required", 400));
+
+  ShoppingList.findOne({ _userId: userId })
     .populate([
       {
         path: "ingredients.product",

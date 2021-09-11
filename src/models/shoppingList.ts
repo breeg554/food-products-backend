@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const shoppingListSchema = new Schema({
-  _mealPlanId: {
-    type: Schema.Types.ObjectId,
-    ref: "MealPlan",
-  },
+  // _mealPlanId: {
+  //   type: Schema.Types.ObjectId,
+  //   ref: "MealPlan",
+  // },
   _userId: {
     type: Schema.Types.ObjectId,
     required: true,
@@ -36,7 +36,7 @@ const shoppingListSchema = new Schema({
     default: false,
   },
 });
-shoppingListSchema.index({ _userId: 1, _mealPlanId: 1 }, { unique: true });
+shoppingListSchema.index({ _userId: 1 }, { unique: true });
 const ShoppingList = mongoose.model("ShoppingList", shoppingListSchema);
 
 export default ShoppingList;
