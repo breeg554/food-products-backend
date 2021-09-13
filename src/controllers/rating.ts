@@ -4,21 +4,6 @@ import { RatingType, RecipeType } from "../types";
 import Rating from "../models/rating";
 import ApiError from "../utils/ApiError";
 
-export const create = (req: Request, res: Response, next: NextFunction) => {
-  // const newRating = new Rating(req.body);
-  // newCategory.save((err, cat) => {
-  //   if (err) return next(new ApiError(err.message, 400));
-  //   res.status(201).json(cat);
-  // });
-};
-export const get = (req: Request, res: Response, next: NextFunction) => {
-  // Category.find({})
-  //   .select("_id name")
-  //   .exec((err, categories) => {
-  //     if (err) return next(new ApiError(err.message, 400));
-  //     res.status(200).json(categories);
-  //   });
-};
 export const rate = async (req: Request, res: Response, next: NextFunction) => {
   const { userId, recipeId, rateValue } = req.body;
   if (!userId || !recipeId || !rateValue) return next(new ApiError("Enter the required data", 400));

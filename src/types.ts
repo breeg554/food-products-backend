@@ -138,3 +138,13 @@ export interface MealPlanType {
   _userId: string;
   days: MealPlanDayType[];
 }
+export interface CommentType {
+  _id?: string;
+  createdAt?: Date;
+  _authorId?: string | { name: string; _id: string };
+  _recipeId: string;
+  _parentId: string | null;
+  likes?: string[];
+  comment: string;
+  subCommentsCount: number;
+}

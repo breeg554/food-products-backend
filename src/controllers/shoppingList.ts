@@ -103,26 +103,35 @@ export const generateListFromMealPlan = async (req: Request, res: Response, next
     next(err);
   }
 };
-export const getShoppingList = (req: Request, res: Response, next: NextFunction) => {
+export const getShoppingList = async (req: Request, res: Response, next: NextFunction) => {
   let { userId } = req.body;
+  const { user } = req;
   if (!userId) return next(new ApiError("userId is required", 400));
 
-  ShoppingList.findOne({ _userId: userId })
-    .populate([
-      {
-        path: "ingredients.product",
-        populate: [
-          { path: "category", select: "_id name" },
-          { path: "unitOfMeasure", select: "_id name" },
-          { path: "tags", select: "_id name" },
-        ],
-      },
-    ])
-    .exec((err: any, shoppingList: any) => {
-      if (err) return next(new ApiError(err.message, 500));
-      else if (!shoppingList) return next(new ApiError("Shopping list not found", 404));
-      res.status(200).json(shoppingList);
+  const populateOptions = [
+    {
+      path: "ingredients.product",
+      populate: [
+        { path: "category", select: "_id name" },
+        { path: "unitOfMeasure", select: "_id name" },
+        { path: "tags", select: "_id name" },
+      ],
+    },
+  ];
+  try {
+    const shoppingList = await ShoppingList.findOne({ _userId: userId }).populate(populateOptions);
+
+    if (shoppingList) return res.status(200).json(shoppingList);
+    else if (userId !== user._id.toString()) return next(new ApiError("Shopping list not found", 404));
+
+    const newShoppingList = new ShoppingList({ _userId: user._id, ingredients: [] });
+    newShoppingList.save(async (err: any, shoppingList: any) => {
+      if (err || !shoppingList) return next(new ApiError(err.message, 500));
+      res.status(201).json(shoppingList);
     });
+  } catch (err) {
+    next(err);
+  }
 };
 export const toggleProductBoughtStatus = async (req: Request, res: Response, next: NextFunction) => {
   const { listId, productId, status } = req.body;
