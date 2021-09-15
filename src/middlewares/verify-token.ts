@@ -19,6 +19,7 @@ const verifyToken = (req: Request, _res: Response, next: NextFunction) => {
         role: isVerified.data.role,
         email: isVerified.data.email,
         isAnonymous: isVerified.data.isAnonymous,
+        userPreference: isVerified.data.userPreference,
       };
     }
   } catch (err: any) {

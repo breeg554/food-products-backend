@@ -141,10 +141,12 @@ export interface MealPlanType {
 export interface CommentType {
   _id?: string;
   createdAt?: Date;
+  updatedAt?: Date;
   _authorId?: string | { name: string; _id: string };
   _recipeId: string;
   _parentId: string | null;
   likes?: string[];
+  dislikes?: string[];
   comment: string;
   subCommentsCount: number;
 }

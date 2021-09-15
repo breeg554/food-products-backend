@@ -59,16 +59,17 @@ export const deleteComment = async (req: Request, res: Response, next: NextFunct
 };
 export const getRecipeComments = (req: Request, res: Response, next: NextFunction) => {
   const { recipeId } = req.params;
+  const { _id } = req.user;
   let { page, pageSize, parentId }: any = req.query;
   if (!recipeId) return next(new ApiError("recipeId required", 400));
   if (!page) page = 1;
   if (!pageSize) pageSize = 30;
-
+  const sort = parentId ? { createdAt: 1 } : { likes: -1, createdAt: -1 };
   const options = {
     populate: "_authorId",
     page,
     limit: pageSize,
-    sort: "-createdAt",
+    sort,
   };
 
   //@ts-ignore
@@ -76,4 +77,76 @@ export const getRecipeComments = (req: Request, res: Response, next: NextFunctio
     if (err || !comments) return next(new ApiError(err.message, 500));
     res.status(200).json(comments);
   });
+};
+export const like = async (req: Request, res: Response, next: NextFunction) => {
+  const { _id } = req.user;
+  const { commentId } = req.params;
+
+  if (!commentId) return next(new ApiError("commentId is required", 400));
+
+  Comment.updateOne(
+    { _id: commentId },
+    [
+      {
+        $set: {
+          likes: {
+            $cond: [
+              { $in: [_id, "$likes"] },
+              { $setDifference: ["$likes", [_id]] },
+              { $concatArrays: ["$likes", [_id]] },
+            ],
+          },
+          dislikes: {
+            $cond: [
+              { $in: [_id, "$likes"] },
+              { $concatArrays: ["$dislikes", []] },
+              { $setDifference: ["$dislikes", [_id]] },
+            ],
+          },
+        },
+      },
+    ],
+    {},
+    (err, comment) => {
+      if (err || !comment) return next(new ApiError(err.message, 500));
+
+      res.status(204).json("");
+    }
+  );
+};
+export const dislike = async (req: Request, res: Response, next: NextFunction) => {
+  const { _id } = req.user;
+  const { commentId } = req.params;
+
+  if (!commentId) return next(new ApiError("commentId is required", 400));
+
+  Comment.updateOne(
+    { _id: commentId },
+    [
+      {
+        $set: {
+          dislikes: {
+            $cond: [
+              { $in: [_id, "$dislikes"] },
+              { $setDifference: ["$dislikes", [_id]] },
+              { $concatArrays: ["$dislikes", [_id]] },
+            ],
+          },
+          likes: {
+            $cond: [
+              { $in: [_id, "$dislikes"] },
+              { $concatArrays: ["$likes", []] },
+              { $setDifference: ["$likes", [_id]] },
+            ],
+          },
+        },
+      },
+    ],
+    {},
+    (err, comment) => {
+      if (err || !comment) return next(new ApiError(err.message, 500));
+
+      res.status(204).json("");
+    }
+  );
 };

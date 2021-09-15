@@ -11,7 +11,9 @@ export const getUserDataForResponse = (user: any) => {
     role: user.role,
     _id: user._id,
     userStats: user.userStats,
+    userPreference: user.userPreference,
     favoriteRecipes: user.favoriteRecipes,
+    details: user.details,
   };
 };
 

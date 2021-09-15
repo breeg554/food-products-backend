@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import UserStats from "../models/userStats";
+import UserPreference from "../models/userPreference";
 import User from "../models/user";
 import Token from "../models/token";
 import ApiError from "../utils/ApiError";
@@ -71,6 +72,8 @@ export const signUp = async (req: Request, res: Response, next: NextFunction) =>
 
     const NewUserStats = new UserStats();
     NewUserStats.save();
+    const NewUserPreference = new UserPreference();
+    NewUserPreference.save();
 
     const NewUser = new User({
       name,
@@ -80,6 +83,7 @@ export const signUp = async (req: Request, res: Response, next: NextFunction) =>
       password: hashPassword,
       username,
       userStats: NewUserStats._id,
+      userPreference: NewUserPreference._id,
     });
 
     NewUser.save((err: any) => {
@@ -87,7 +91,7 @@ export const signUp = async (req: Request, res: Response, next: NextFunction) =>
         const keys = Object.keys(err.keyPattern);
         if (keys[0] === "email") return next(new ApiError("This email is already in use", 409));
         else return next(new ApiError("This username is already in use", 409));
-      } else if (err) return next(new ApiError("Something went wrong", 400));
+      } else if (err) return next(new ApiError(err, 400));
       res.status(201).json("Created succesful");
     });
   } catch (err: any) {
@@ -141,7 +145,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).populate("userStats");
+    const user = await User.findOne({ email }).populate([{ path: "userStats" }, { path: "userPreference" }]);
 
     if (!user) throw new ApiError("User not found", 404);
 
@@ -155,6 +159,12 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
       email: user.email,
       role: user.role,
       isAnonymous: user.isAnonymous,
+      userPreference: {
+        diet: { notLike: user.userPreference.diet.notLike },
+        categories: {
+          notLike: user.userPreference.categories.notLike,
+        },
+      },
     };
 
     const accessToken = generateAccessToken(payload);
@@ -178,7 +188,7 @@ export const getUserDetails = async (req: Request, res: Response, next: NextFunc
   try {
     let { _id } = req.user;
 
-    const userDetails = await User.findOne({ _id }).populate("userStats");
+    const userDetails = await User.findOne({ _id }).populate([{ path: "userStats" }, { path: "userPreference" }]);
     if (!userDetails) throw new ApiError("User not found", 404);
 
     if (userDetails.isBlocked) throw new ApiError("Account has been blocked", 403);
@@ -196,6 +206,25 @@ export const updateUserDetails = (req: Request, res: Response, next: NextFunctio
       if (err) return next(new ApiError(err.message, 400));
       res.status(204).json();
     });
+  } catch (err: any) {
+    next(err);
+  }
+};
+export const updateUserPreference = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let { _id } = req.user;
+    const { categories, diet } = req.body;
+    if (!categories || !diet) return next(new ApiError("Provide required data", 400));
+
+    const user = await User.findById({ _id });
+    if (!user) return next(new ApiError("User not found", 404));
+
+    UserPreference.findByIdAndUpdate({ _id: user.userPreference }, { diet, categories, alreadyAsked: true }).exec(
+      (err: any) => {
+        if (err) return next(new ApiError(err.message, 400));
+        res.status(204).json();
+      }
+    );
   } catch (err: any) {
     next(err);
   }

@@ -5,6 +5,14 @@ declare namespace Express {
       role: string;
       email: string;
       isAnonymous: boolean;
+      userPreference: {
+        diet: {
+          notLike: string[];
+        };
+        categories: {
+          notLike: string[];
+        };
+      };
     };
   }
 }

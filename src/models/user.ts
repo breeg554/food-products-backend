@@ -44,6 +44,10 @@ const userSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "UserStats",
   },
+  userPreference: {
+    type: Schema.Types.ObjectId,
+    ref: "UserPreference",
+  },
   isBlocked: {
     type: Boolean,
     default: false,
@@ -54,8 +58,23 @@ const userSchema = new Schema({
   },
   role: {
     type: String,
-    enum: ["admin", "user"],
+    enum: ["admin", "user", "anonymous"],
     default: "user",
+  },
+  details: {
+    gender: {
+      type: String,
+      enum: ["male", "female", null],
+      default: null,
+    },
+    height: {
+      type: Number,
+      default: null,
+    },
+    weight: {
+      type: Number,
+      default: null,
+    },
   },
   favoriteRecipes: {
     type: [{ type: Schema.Types.ObjectId, ref: "Recipe" }],
