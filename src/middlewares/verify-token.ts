@@ -1,8 +1,9 @@
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import ApiError from "../utils/ApiError";
 import { ACCESS_TOKEN_SECRET } from "../config/jwt";
 
-const verifyToken = (req: any, res: any, next: any) => {
+const verifyToken = (req: Request, _res: Response, next: NextFunction) => {
   // const token = req.header("Authorization");
   const token = req.cookies.accessToken;
 
@@ -18,6 +19,7 @@ const verifyToken = (req: any, res: any, next: any) => {
         role: isVerified.data.role,
         email: isVerified.data.email,
         isAnonymous: isVerified.data.isAnonymous,
+        userPreference: isVerified.data.userPreference,
       };
     }
   } catch (err: any) {

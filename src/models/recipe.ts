@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import ApiError from "../utils/ApiError";
-
+import User from "./user";
+import UserStats from "./userStats";
 const { Schema } = mongoose;
 
 const recipeSchema = new Schema({
@@ -12,8 +14,8 @@ const recipeSchema = new Schema({
     maxLength: 200,
   },
   image: {
-    type: String,
-    required: false,
+    small: { type: String, required: false },
+    medium: { type: String, required: false },
   },
   servings: {
     type: Number,
@@ -159,9 +161,10 @@ const recipeSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["accepted", "rejected", "in_progress"],
-    default: "in_progress",
+    enum: ["private", "rejected", "in_progress", "public"],
+    default: "private",
   },
+
   _authorId: {
     type: Schema.Types.ObjectId,
     required: true,
@@ -172,6 +175,22 @@ const recipeSchema = new Schema({
     default: Date.now(),
   },
 });
+recipeSchema.post("save", async (doc: any, next: any) => {
+  try {
+    const user: any = await User.findById({ _id: doc._authorId });
+    if (!user.userStats) return next();
 
+    const userStats = await UserStats.findById({ _id: user.userStats });
+    if (!userStats) return next();
+
+    userStats.meal.private++;
+    userStats.save();
+
+    return next();
+  } catch (err: any) {
+    return next(new ApiError(err.message, 500));
+  }
+});
+recipeSchema.plugin(aggregatePaginate);
 recipeSchema.plugin(mongoosePaginate);
 export default mongoose.model("Recipe", recipeSchema);

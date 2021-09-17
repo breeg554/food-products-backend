@@ -10,6 +10,7 @@ import {
   getAll,
   signInAnonymous,
   updateUserDetails,
+  updateUserPreference,
   checkIfUsernameIsTaken,
   getUserStats,
 } from "../controllers/user";
@@ -25,5 +26,6 @@ router.get("/user", verifyToken, getUserDetails);
 router.get("/user/:id/statistic", verifyToken, getUserStats);
 // router.get("/users/all", verifyToken, autorizeAccess(["admin"]), getAll);
 router.put("/user", verifyToken, updateUserDetails);
+router.put("/user/preference", verifyToken, updateUserPreference);
 
 export default router;

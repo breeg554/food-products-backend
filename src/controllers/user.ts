@@ -1,14 +1,16 @@
 import { v4 as uuidv4 } from "uuid";
+import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import UserStats from "../models/userStats";
+import UserPreference from "../models/userPreference";
 import User from "../models/user";
 import Token from "../models/token";
 import ApiError from "../utils/ApiError";
 import { getUserDataForResponse } from "../services/user";
 import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from "../config/jwt";
 
-const COOKIE_OPTIONS = {
+const COOKIE_OPTIONS: any = {
   httpOnly: true,
   sameSite: "none",
   secure: true,
@@ -19,7 +21,7 @@ const generateAccessToken = (payload: any) => {
     expiresIn: "60sec",
   });
 };
-export const token = async (req: any, res: any, next: any) => {
+export const token = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let refreshToken = req.cookies.refreshToken;
     if (!refreshToken) throw new ApiError("Access denied", 401);
@@ -39,7 +41,7 @@ export const token = async (req: any, res: any, next: any) => {
     next(err);
   }
 };
-export const logout = async (req: any, res: any, next: any) => {
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let _userId = req.body.id;
 
@@ -56,7 +58,7 @@ export const logout = async (req: any, res: any, next: any) => {
   }
 };
 
-export const signUp = async (req: any, res: any, next: any) => {
+export const signUp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, surname, email, password, username } = req.body;
 
@@ -70,6 +72,8 @@ export const signUp = async (req: any, res: any, next: any) => {
 
     const NewUserStats = new UserStats();
     NewUserStats.save();
+    const NewUserPreference = new UserPreference();
+    NewUserPreference.save();
 
     const NewUser = new User({
       name,
@@ -79,6 +83,7 @@ export const signUp = async (req: any, res: any, next: any) => {
       password: hashPassword,
       username,
       userStats: NewUserStats._id,
+      userPreference: NewUserPreference._id,
     });
 
     NewUser.save((err: any) => {
@@ -86,14 +91,14 @@ export const signUp = async (req: any, res: any, next: any) => {
         const keys = Object.keys(err.keyPattern);
         if (keys[0] === "email") return next(new ApiError("This email is already in use", 409));
         else return next(new ApiError("This username is already in use", 409));
-      } else if (err) return next(new ApiError("Something went wrong", 400));
+      } else if (err) return next(new ApiError(err, 400));
       res.status(201).json("Created succesful");
     });
   } catch (err: any) {
     next(err);
   }
 };
-export const signInAnonymous = async (req: any, res: any, next: any) => {
+export const signInAnonymous = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const uuid = uuidv4();
     const salt = await bcrypt.genSalt(10);
@@ -107,6 +112,7 @@ export const signInAnonymous = async (req: any, res: any, next: any) => {
       email: uuid,
       password: hashPassword,
       isAnonymous: true,
+      role: "anonymous",
     });
     const created = await newAnonymousUser.save();
     if (!created) throw new ApiError("Something went wrong", 400);
@@ -136,11 +142,11 @@ export const signInAnonymous = async (req: any, res: any, next: any) => {
   }
 };
 
-export const signIn = async (req: any, res: any, next: any) => {
+export const signIn = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).populate("userStats");
+    const user = await User.findOne({ email }).populate([{ path: "userStats" }, { path: "userPreference" }]);
 
     if (!user) throw new ApiError("User not found", 404);
 
@@ -149,11 +155,26 @@ export const signIn = async (req: any, res: any, next: any) => {
 
     if (user.isBlocked) throw new ApiError("Account has been blocked", 403);
 
+    if (!user.userPreference) {
+      const newUserPreference = new UserPreference();
+      await newUserPreference.save();
+
+      user.userPreference = newUserPreference._id;
+      await user.save();
+      user.userPreference = newUserPreference;
+    }
+
     const payload = {
       id: user._id,
       email: user.email,
       role: user.role,
       isAnonymous: user.isAnonymous,
+      userPreference: {
+        diet: { notLike: user.userPreference.diet.notLike },
+        categories: {
+          notLike: user.userPreference.categories.notLike,
+        },
+      },
     };
 
     const accessToken = generateAccessToken(payload);
@@ -173,11 +194,11 @@ export const signIn = async (req: any, res: any, next: any) => {
   }
 };
 
-export const getUserDetails = async (req: any, res: any, next: any) => {
+export const getUserDetails = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let { _id } = req.user;
 
-    const userDetails = await User.findOne({ _id }).populate("userStats");
+    const userDetails = await User.findOne({ _id }).populate([{ path: "userStats" }, { path: "userPreference" }]);
     if (!userDetails) throw new ApiError("User not found", 404);
 
     if (userDetails.isBlocked) throw new ApiError("Account has been blocked", 403);
@@ -187,7 +208,7 @@ export const getUserDetails = async (req: any, res: any, next: any) => {
     next(err);
   }
 };
-export const updateUserDetails = (req: any, res: any, next: any) => {
+export const updateUserDetails = (req: Request, res: Response, next: NextFunction) => {
   try {
     let { _id } = req.user;
 
@@ -199,13 +220,32 @@ export const updateUserDetails = (req: any, res: any, next: any) => {
     next(err);
   }
 };
-export const getAll = (req: any, res: any, next: any) => {
-  User.paginate({}, { page: 1, limit: 5 }, (err: any, users: any) => {
-    if (err) return next(new ApiError(err.message, 400));
-    res.status(200).json(users);
-  });
+export const updateUserPreference = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let { _id } = req.user;
+    const { categories, diet } = req.body;
+    if (!categories || !diet) return next(new ApiError("Provide required data", 400));
+
+    const user = await User.findById({ _id });
+    if (!user) return next(new ApiError("User not found", 404));
+
+    UserPreference.findByIdAndUpdate({ _id: user.userPreference }, { diet, categories, alreadyAsked: true }).exec(
+      (err: any) => {
+        if (err) return next(new ApiError(err.message, 400));
+        res.status(204).json();
+      }
+    );
+  } catch (err: any) {
+    next(err);
+  }
 };
-export const checkIfUsernameIsTaken = async (req: any, res: any, next: any) => {
+export const getAll = (_req: Request, res: Response, next: NextFunction) => {
+  // User.paginate({}, { page: 1, limit: 5 }, (err: any, users: any) => {
+  //   if (err) return next(new ApiError(err.message, 400));
+  //   res.status(200).json(users);
+  // });
+};
+export const checkIfUsernameIsTaken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username } = req.body;
     const userDetails = await User.findOne({ username });
@@ -217,7 +257,7 @@ export const checkIfUsernameIsTaken = async (req: any, res: any, next: any) => {
   }
 };
 
-export const getUserStats = (req: any, res: any, next: any) => {
+export const getUserStats = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
   UserStats.findById({ _id: id }, (err: any, userStats: any) => {

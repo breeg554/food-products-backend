@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from "express";
 import ApiError from "../utils/ApiError";
 import User from "../models/user";
 import Product from "../models/product";
@@ -5,7 +6,7 @@ import { MAXIMUM_INSERTED_PRODUCTS_WITHIN_ONE_HOUR } from "../config/db";
 
 const ONE_HOUR = 3600000;
 
-const checkNumberOfEnteredProducts = async (req: any, res: any, next: any) => {
+const checkNumberOfEnteredProducts = async (req: Request, _res: Response, next: NextFunction) => {
   const { user } = req;
 
   if (user.isAnonymous) {

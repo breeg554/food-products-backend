@@ -8,6 +8,9 @@ import recipe from "./recipe";
 import recipeCategories from "./recipeCategories";
 import rating from "./rating";
 import dietType from "./dietType";
+import mealPlan from "./mealPlan";
+import shoppingList from "./shoppingList";
+import comment from "./comment";
 
 const router = express.Router();
 router.use("/tags", tags);
@@ -17,7 +20,10 @@ router.use("/products", product);
 router.use("/recipe", recipe);
 router.use("/recipeCategories", recipeCategories);
 router.use("/rating", rating);
+router.use("/comments", comment);
 router.use("/dietType", dietType);
+router.use("/shoppingList", shoppingList);
+router.use("/mealPlan", mealPlan);
 router.use("/", user);
 
 export default router;

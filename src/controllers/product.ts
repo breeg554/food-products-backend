@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from "express";
 import Product from "../models/product";
 import ApiError from "../utils/ApiError";
 import { nutritionProductSort, productStatus } from "../services/product";
@@ -8,7 +9,7 @@ import {
   DAILY_REQUIREMENT_OF_FAT,
 } from "../utils/caloricConsts";
 
-export const create = (req: any, res: any, next: any) => {
+export const create = (req: Request, res: Response, next: NextFunction) => {
   const sumOfCaloricBreakDown = req.body.protein * 4 + req.body.fat * 9 + req.body.carb * 4;
 
   const newProduct = new Product({
@@ -56,8 +57,7 @@ export const get = (req: any, res: any, next: any) => {
 
   let query = search ? { name: { $regex: search, $options: "i" } } : {};
   //@ts-ignore
-  query = status ? { ...query, status } : { ...query };
-
+  query = status ? { ...query, status: { $in: status } } : { ...query };
   const sort = sortColumn ? nutritionProductSort(sortColumn, order) : "";
 
   const options = {
@@ -71,6 +71,7 @@ export const get = (req: any, res: any, next: any) => {
     sort,
   };
 
+  //@ts-ignore
   Product.paginate(query, options, (err: any, products: any) => {
     if (err) return next(new ApiError(err.message, 500));
 
@@ -87,7 +88,7 @@ export const getByUserId = (req: any, res: any, next: any) => {
   if (!pageSize) pageSize = 5;
   if (status && !productStatus.includes(status)) return next(new ApiError("Bad product status", 400));
 
-  const query = status ? { _authorId: userId, status } : { _authorId: userId };
+  const query = status ? { _authorId: userId, status: { $in: status } } : { _authorId: userId };
 
   const options = {
     populate: [
@@ -99,13 +100,14 @@ export const getByUserId = (req: any, res: any, next: any) => {
     limit: pageSize,
     createdAt: "-1",
   };
-
+  // const productAggregate = Product.aggregate([{ $match: { ...query } }]);
+  //@ts-ignore
   Product.paginate(query, options, (err: any, products: any) => {
     if (err) return next(new ApiError(err.message, 500));
     res.status(200).json(products);
   });
 };
-export const updateById = async (req: any, res: any, next: any) => {
+export const updateById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let { id } = req.params;
     Product.updateOne({ _id: id }, { name: "ccc" });
