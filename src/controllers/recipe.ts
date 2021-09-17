@@ -99,8 +99,6 @@ export const create = (req: Request, res: Response, next: NextFunction) => {
   const cloudOptions = { upload_preset: cloudConfig.api_preset, folder: "mealPlanner" };
 
   cloudinary.uploader.upload(req.body.image, cloudOptions, (err, image) => {
-    console.log(err);
-    console.log(image);
     if (err || !image) return next(new ApiError("Something went wrong with image", 500));
     const fromCloud = {
       small: image.eager[0]?.url,
