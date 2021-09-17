@@ -4,6 +4,7 @@ import Recipe from "../models/recipe";
 import RecipeCategories from "../models/recipeCategories";
 import DietType from "../models/dietType";
 import User from "../models/user";
+import UserStats from "../models/userStats";
 import ApiError from "../utils/ApiError";
 import cloudConfig from "../config/cloudinary";
 import cloudinary from "../cloudinary";
@@ -44,10 +45,11 @@ export const getRecipe = async (req: any, res: Response, next: NextFunction) => 
   if (recipeId.length !== 24) return next(new ApiError("Invalid recipeId", 400));
 
   try {
-    const recipe: RecipeType = await Recipe.findById({ _id: recipeId }).populate([
+    const recipe: any = await Recipe.findById({ _id: recipeId }).populate([
       { path: "category", select: "_id name" },
       { path: "dietTypes", select: "_id name" },
       { path: "tags", select: "_id name" },
+      { path: "_authorId", select: "_id username initials " },
       {
         path: "ingredients.product",
         populate: [
@@ -61,7 +63,7 @@ export const getRecipe = async (req: any, res: Response, next: NextFunction) => 
     if (!recipe) return next(new ApiError("recipe not found", 404));
     const { _id } = req.user;
 
-    if (recipe.status !== "public" && _id !== recipe._authorId.toString())
+    if (recipe.status !== "public" && _id !== recipe._authorId._id.toString())
       return next(new ApiError("recipe not found", 404));
 
     res.status(200).json(recipe);
@@ -170,8 +172,24 @@ export const changeRecipeStatus = async (req: Request, res: Response, next: Next
     if (recipe.status === "in_progress") return next(new ApiError("Status change request already sent", 400));
     else if (recipe.status === "public") return next(new ApiError("Recipe status already changed", 400));
 
+    const user: any = await User.findById({ _id });
+    if (!user || !user.userStats) return next(new ApiError("User not found", 404));
+
+    const userStats = await UserStats.findById({ _id: mongoose.Types.ObjectId(user.userStats) });
+
+    if (!userStats) return next(new ApiError("UserStats not found", 404));
+
+    userStats.meal.private--;
+    userStats.meal.in_progress++;
+    await userStats.save();
+
     Recipe.updateOne({ _id: recipeId }, { status: "in_progress" }).exec((err, updated) => {
-      if (err || !updated) return next(new ApiError(err.message, 500));
+      if (err || !updated) {
+        userStats.meal.private++;
+        userStats.meal.in_progress--;
+        userStats.save();
+        return next(new ApiError(err.message, 500));
+      }
       res.status(204).json({});
     });
   } catch (err) {
@@ -181,7 +199,7 @@ export const changeRecipeStatus = async (req: Request, res: Response, next: Next
 
 export const getTopRatedRecipes = (req: Request, res: Response, next: NextFunction) => {
   let { page, pageSize }: any = req.query;
-
+  const { categories, diet } = req.user.userPreference;
   if (!page || isNaN(page)) page = 1;
   if (!pageSize || isNaN(pageSize)) pageSize = 10;
   pageSize = Number.parseInt(pageSize);
@@ -190,8 +208,16 @@ export const getTopRatedRecipes = (req: Request, res: Response, next: NextFuncti
     page,
     limit: pageSize,
   };
+  const categoriesIds = categories ? categories.notLike.map((cat) => mongoose.Types.ObjectId(cat)) : [];
+  const dietsIds = diet ? diet.notLike.map((diet) => mongoose.Types.ObjectId(diet)) : [];
   const recipeAggregate = Recipe.aggregate([
-    { $match: { isPublic: true } },
+    {
+      $match: {
+        isPublic: true,
+        category: { $nin: categoriesIds },
+        dietTypes: { $nin: dietsIds },
+      },
+    },
     {
       $set: {
         "rating.rateAvg": {
@@ -204,8 +230,10 @@ export const getTopRatedRecipes = (req: Request, res: Response, next: NextFuncti
 
   Recipe.aggregatePaginate(recipeAggregate, options, (err: any, recipes: any) => {
     if (err || !recipes) return next(new ApiError(err.message, 500));
-    Recipe.populate(recipes, POPULATE_OPTIONS, (err, results) => {
+
+    Recipe.populate(recipes.docs, POPULATE_OPTIONS, (err, results) => {
       if (err || !results) return next(new ApiError(err.message, 500));
+
       res.status(200).json(recipes);
     });
   });
@@ -213,6 +241,7 @@ export const getTopRatedRecipes = (req: Request, res: Response, next: NextFuncti
 
 export const getQuickRecipes = (req: Request, res: Response, next: NextFunction) => {
   let { page, pageSize }: any = req.query;
+  const { categories, diet } = req.user.userPreference;
   if (!page || isNaN(page)) page = 1;
   if (!pageSize || isNaN(pageSize)) pageSize = 10;
   pageSize = Number.parseInt(pageSize);
@@ -225,10 +254,19 @@ export const getQuickRecipes = (req: Request, res: Response, next: NextFunction)
   };
 
   //@ts-ignore
-  Recipe.paginate({ isPublic: true, readyInMinutes: { $lt: 35 } }, options, (err: any, recipes: any) => {
-    if (err || !recipes) return next(new ApiError(err.message, 500));
-    res.status(200).json(recipes);
-  });
+  Recipe.paginate(
+    {
+      isPublic: true,
+      readyInMinutes: { $lt: 35 },
+      category: { $nin: categories.notLike },
+      dietTypes: { $nin: diet.notLike },
+    },
+    options,
+    (err: any, recipes: any) => {
+      if (err || !recipes) return next(new ApiError(err.message, 500));
+      res.status(200).json(recipes);
+    }
+  );
 };
 
 export const getRecipesByCategory = async (req: Request, res: Response, next: NextFunction) => {

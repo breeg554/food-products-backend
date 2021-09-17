@@ -18,13 +18,19 @@ const router = express.Router();
 // router.post("/", verifyToken, autorizeAccess(["admin", "user"]), checkNumberOfEnteredProducts, create);
 router.post("/", verifyToken, autorizeAccess(["admin", "user"]), create);
 router.post("/status", verifyToken, autorizeAccess(["admin", "user"]), changeRecipeStatus);
-router.post("/favorite", verifyToken, toggleFavoriteRecipe);
-router.get("/", verifyToken, get);
-router.get("/categories/:name", verifyToken, getRecipesByCategory);
-router.get("/diet/:name", verifyToken, getRecipesByDiet); // ???
-router.get("/userRecipes/:userId", verifyToken, getUserRecipes);
+router.post("/favorite", verifyToken, autorizeAccess(["user", "admin"]), toggleFavoriteRecipe);
+router.get("/", verifyToken, autorizeAccess(["user", "admin"]), get);
+router.get("/categories/:name", verifyToken, autorizeAccess(["user", "admin"]), getRecipesByCategory);
+router.get("/diet/:name", verifyToken, autorizeAccess(["user", "admin"]), getRecipesByDiet); // ???
+router.get(
+  "/userRecipes/:userId",
+  verifyToken,
+  autorizeAccess(["user", "admin"]),
+  autorizeAccess(["user", "admin"]),
+  getUserRecipes
+);
 router.get("/topRated", verifyToken, getTopRatedRecipes);
-router.get("/quick", verifyToken, getQuickRecipes);
-router.get("/:recipeId", verifyToken, autorizeAccess(["admin", "user"]), getRecipe);
+router.get("/quick", verifyToken, autorizeAccess(["user", "admin"]), getQuickRecipes);
+router.get("/:recipeId", verifyToken, autorizeAccess(["user", "admin"]), autorizeAccess(["admin", "user"]), getRecipe);
 
 export default router;

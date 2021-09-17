@@ -5,7 +5,7 @@ const autorizeAccess = (roles: string[]) => {
     const { user } = req;
 
     if (!user || !roles.includes(user.role)) {
-      return next(new ApiError("Access denied", 403));
+      return next(new ApiError("Access denied", 401));
     }
     next();
   };

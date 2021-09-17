@@ -67,3 +67,54 @@ export async function updateStatsAfterUpdateProductStatus(
     return new ApiError(err.message, 500);
   }
 }
+
+export async function updateStatsAfterUpdateRecipeStatus(
+  _userId: string,
+  currentStatus: string,
+  previousStatus: string
+) {
+  try {
+    const user: any = await User.findById({ _id: _userId });
+
+    if (!user.userStats) return;
+    const stats: any = await this.findById(user.userStats);
+
+    if (currentStatus !== previousStatus) {
+      if (previousStatus === "in_progress") {
+        if (currentStatus === "public") {
+          stats.meal.public++;
+          stats.meal.in_progress--;
+          stats.meal.mealRep += 50;
+        } else {
+          stats.meal.in_progress--;
+          stats.meal.rejected++;
+        }
+      } else if (previousStatus === "public") {
+        if (currentStatus === "in_progress") {
+          stats.meal.public--;
+          stats.meal.in_progress++;
+          stats.meal.mealRep -= 50;
+        } else {
+          stats.meal.public--;
+          stats.meal.rejected++;
+          stats.meal.mealRep -= 50;
+        }
+      } else if (previousStatus === "rejected") {
+        if (currentStatus === "public") {
+          stats.meal.public++;
+          stats.meal.rejected--;
+          stats.meal.mealRep += 50;
+        } else {
+          stats.meal.rejected--;
+          stats.meal.in_progress++;
+        }
+      }
+    }
+
+    stats.reputation = stats.products.productsRep + stats.meal.mealRep;
+    stats.save();
+  } catch (err: any) {
+    console.log(err);
+    return new ApiError(err.message, 500);
+  }
+}

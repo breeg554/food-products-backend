@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 import User from "./user";
-import { updateStatsAfterUpdateProductStatus } from "../services/user";
+import { updateStatsAfterUpdateProductStatus, updateStatsAfterUpdateRecipeStatus } from "../services/user";
 const { Schema } = mongoose;
 
 const userStatsSchema = new Schema({
@@ -32,7 +32,7 @@ const userStatsSchema = new Schema({
       type: Number,
       default: 0,
     },
-    accepted: {
+    public: {
       type: Number,
       default: 0,
     },
@@ -44,8 +44,13 @@ const userStatsSchema = new Schema({
       type: Number,
       default: 0,
     },
+    private: {
+      type: Number,
+      default: 0,
+    },
   },
 });
 userStatsSchema.set("timestamps", true);
 userStatsSchema.statics.updateStatsAfterUpdateProductStatus = updateStatsAfterUpdateProductStatus;
+userStatsSchema.statics.updateStatsAfterUpdateRecipeStatus = updateStatsAfterUpdateRecipeStatus;
 export default mongoose.model("UserStats", userStatsSchema);

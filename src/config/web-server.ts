@@ -1,2 +1,2 @@
 export const port = process.env.PORT || 3003;
-export const origin = process.env.APP_ORIGIN;
+export const origin = [process.env.APP_ORIGIN, process.env.APP_ORIGIN_2];

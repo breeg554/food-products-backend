@@ -6,9 +6,9 @@ import { getMealPlanByDate, getUserMealPlans, create, updateDay } from "../contr
 
 const router = express.Router();
 
-router.get("/getPlanByDate", verifyToken, getMealPlanByDate);
-router.get("/userPlans", verifyToken, getUserMealPlans);
-router.post("/create", verifyToken, create);
-router.put("/day/:dayId", verifyToken, updateDay);
+router.get("/getPlanByDate", verifyToken, autorizeAccess(["user", "admin"]), getMealPlanByDate);
+router.get("/userPlans", verifyToken, autorizeAccess(["user", "admin"]), getUserMealPlans);
+router.post("/create", verifyToken, autorizeAccess(["user", "admin"]), create);
+router.put("/day/:dayId", verifyToken, autorizeAccess(["user", "admin"]), updateDay);
 
 export default router;

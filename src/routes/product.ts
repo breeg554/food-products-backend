@@ -5,8 +5,8 @@ import checkNumberOfEnteredProducts from "../middlewares/checkNumberOfEnteredPro
 import { create, get, getByUserId, updateById } from "../controllers/product";
 const router = express.Router();
 
-router.post("/", verifyToken, autorizeAccess(["admin", "user"]), checkNumberOfEnteredProducts, create);
-router.get("/", verifyToken, autorizeAccess(["admin", "user"]), get);
+router.post("/", verifyToken, autorizeAccess(["admin", "user", "anonymous"]), checkNumberOfEnteredProducts, create);
+router.get("/", verifyToken, autorizeAccess(["admin", "user", "anonymous"]), get);
 router.get("/user/:userId", verifyToken, autorizeAccess(["admin", "user"]), getByUserId);
-router.put("/:id", verifyToken, autorizeAccess(["admin", "user"]), updateById);
+// router.put("/:id", verifyToken, autorizeAccess(["admin", "user"]), updateById);
 export default router;

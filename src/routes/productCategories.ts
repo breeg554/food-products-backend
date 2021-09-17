@@ -6,6 +6,6 @@ import autorizeAccess from "../middlewares/autorizeAccess";
 const router = express.Router();
 
 router.post("/", verifyToken, autorizeAccess(["admin"]), create);
-router.get("/", verifyToken, autorizeAccess(["user", "admin"]), get);
+router.get("/", verifyToken, autorizeAccess(["user", "admin", "anonymous"]), get);
 
 export default router;

@@ -9,7 +9,7 @@ import ApiError from "../utils/ApiError";
 export const getMealPlanByDate = async (req: Request, res: Response, next: NextFunction) => {
   let { startDate, endDate } = req.query;
   const { user } = req;
-  console.log(user);
+
   if (!checkIfDate(startDate) || !checkIfDate(endDate)) return next(new ApiError("Incorrect dates", 400));
 
   MealPlan.findOne({

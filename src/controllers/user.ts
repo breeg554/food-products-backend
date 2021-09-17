@@ -112,6 +112,7 @@ export const signInAnonymous = async (_req: Request, res: Response, next: NextFu
       email: uuid,
       password: hashPassword,
       isAnonymous: true,
+      role: "anonymous",
     });
     const created = await newAnonymousUser.save();
     if (!created) throw new ApiError("Something went wrong", 400);
@@ -153,6 +154,15 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
     if (!match) throw new ApiError("Incorrect password", 400);
 
     if (user.isBlocked) throw new ApiError("Account has been blocked", 403);
+
+    if (!user.userPreference) {
+      const newUserPreference = new UserPreference();
+      await newUserPreference.save();
+
+      user.userPreference = newUserPreference._id;
+      await user.save();
+      user.userPreference = newUserPreference;
+    }
 
     const payload = {
       id: user._id,
