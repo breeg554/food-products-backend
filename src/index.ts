@@ -1,4 +1,3 @@
-import express from "express";
 import { initialize, close } from "./web-server";
 import { initializeDB, closeDB } from "./database";
 
