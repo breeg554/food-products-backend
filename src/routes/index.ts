@@ -11,6 +11,7 @@ import dietType from "./dietType";
 import mealPlan from "./mealPlan";
 import shoppingList from "./shoppingList";
 import comment from "./comment";
+import nodemailer from "./nodemailer";
 
 const router = express.Router();
 router.use("/tags", tags);
@@ -24,6 +25,7 @@ router.use("/comments", comment);
 router.use("/dietType", dietType);
 router.use("/shoppingList", shoppingList);
 router.use("/mealPlan", mealPlan);
+router.use("/email", nodemailer);
 router.use("/", user);
 
 export default router;

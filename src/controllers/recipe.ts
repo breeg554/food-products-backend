@@ -100,9 +100,10 @@ export const create = (req: Request, res: Response, next: NextFunction) => {
 
   cloudinary.uploader.upload(req.body.image, cloudOptions, (err, image) => {
     if (err || !image) return next(new ApiError("Something went wrong with image", 500));
+
     const fromCloud = {
-      small: image.eager[0]?.url,
-      medium: image.url,
+      small: image.eager[0]?.secure_url,
+      medium: image.secure_url,
     };
     const nutrition = calculateRecipeNutrition(ingredients);
     const newRecipe = new Recipe({

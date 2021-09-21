@@ -17,7 +17,9 @@ export const getMealPlanByDate = async (req: Request, res: Response, next: NextF
     endDate: dateFormat(endDate.toString(), "isoDate"),
     _userId: user._id,
   })
-    .populate([{ path: "days", model: "MealPlanDay", populate: { path: "meals.recipe" } }])
+    .populate([
+      { path: "days", model: "MealPlanDay", populate: { path: "meals.recipe", populate: { path: "category" } } },
+    ])
     .exec(async (err: any, mealPlan: any) => {
       if (err) return next(new ApiError(err.message, 500));
       return res.status(200).json(mealPlan);
