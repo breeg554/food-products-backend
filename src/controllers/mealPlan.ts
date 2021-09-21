@@ -18,7 +18,24 @@ export const getMealPlanByDate = async (req: Request, res: Response, next: NextF
     _userId: user._id,
   })
     .populate([
-      { path: "days", model: "MealPlanDay", populate: { path: "meals.recipe", populate: { path: "category" } } },
+      {
+        path: "days",
+        model: "MealPlanDay",
+        populate: {
+          path: "meals.recipe",
+          populate: [
+            { path: "category" },
+            {
+              path: "ingredients.product",
+              populate: [
+                { path: "category", select: "_id name" },
+                { path: "unitOfMeasure", select: "_id name" },
+                { path: "tags", select: "_id name" },
+              ],
+            },
+          ],
+        },
+      },
     ])
     .exec(async (err: any, mealPlan: any) => {
       if (err) return next(new ApiError(err.message, 500));

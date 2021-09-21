@@ -1,4 +1,4 @@
-import { sendShoppingList, sendRecipe } from "../controllers/nodemailer";
+import { sendShoppingList, sendRecipe, sendPlanner } from "../controllers/nodemailer";
 import express from "express";
 import multer from "multer";
 import verifyToken from "../middlewares/verify-token";
@@ -15,4 +15,5 @@ router.post(
   sendShoppingList
 );
 router.post("/recipe", verifyToken, autorizeAccess(["user", "admin"]), processMultipart.single("pdf"), sendRecipe);
+router.post("/planner", verifyToken, autorizeAccess(["user", "admin"]), processMultipart.single("pdf"), sendPlanner);
 export default router;
