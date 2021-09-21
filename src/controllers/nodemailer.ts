@@ -12,8 +12,8 @@ export const sendShoppingList = async (req: Request, res: Response, next: NextFu
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
-        user: "smartmealplan@gmail.com",
-        pass: "Mealplan123456789!",
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
       },
     });
     const info = await transporter.sendMail({
@@ -45,8 +45,8 @@ export const sendRecipe = async (req: Request, res: Response, next: NextFunction
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
-        user: "smartmealplan@gmail.com",
-        pass: "Mealplan123456789!",
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
       },
     });
     const info = await transporter.sendMail({
@@ -78,8 +78,8 @@ export const sendPlanner = async (req: Request, res: Response, next: NextFunctio
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
-        user: "smartmealplan@gmail.com",
-        pass: "Mealplan123456789!",
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
       },
     });
     const info = await transporter.sendMail({
